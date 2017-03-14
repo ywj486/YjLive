@@ -1,58 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray_bg"
+    android:clipChildren="false"
     tools:context="com.ywj.yjlive.activity.MainActivity">
-
-    <FrameLayout
-        android:id="@+id/main_fragment"
+    <android.support.v4.view.ViewPager
+        android:id="@+id/content"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dip"
+        android:layout_weight="1">
 
-    </FrameLayout>
-
-    <RadioGroup
+    </android.support.v4.view.ViewPager>
+    <LinearLayout
         android:id="@+id/radioGroup"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_alignParentBottom="true"
-        android:layout_weight="1"
-
         android:orientation="horizontal">
-
-        <RadioButton
-            android:id="@+id/home"
-            android:layout_width="125dp"
-            android:layout_height="wrap_content"
-            android:button="@null"
-            android:checked="true"
-            android:drawableTop="@drawable/radio_home"
-            android:gravity="center"
-            android:paddingBottom="25dp"
-            android:paddingTop="25dp"
-            android:layout_weight="0.05" />
-
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="83dp"
-            android:layout_alignParentBottom="true"
-            android:src="@mipmap/tab_room_p"
-            android:layout_marginBottom="45dp"
-            android:layout_weight="0.23"
-            android:id="@+id/imageView" />
-
-        <RadioButton
-            android:id="@+id/my"
+            android:id="@+id/home"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.31"
-            android:button="@null"
-            android:drawableTop="@drawable/radio_my"
-            android:gravity="center"
-            android:paddingBottom="25dp"
-            android:paddingTop="25dp" />
-    </RadioGroup>
+            android:layout_weight="1"
+            android:checked="true"
+            android:src="@mipmap/tab_live_p"
+      />
+        <ImageView
+            android:id="@+id/live"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:layout_weight="1"
+            android:layout_marginTop="-30dp"
+            android:src="@mipmap/tab_room_p"
+            android:clickable="true"
+        />
 
-</RelativeLayout>
+        <ImageView
+            android:id="@+id/mine"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@mipmap/tab_me_p" />
+    </LinearLayout>
+
+
+</LinearLayout>
