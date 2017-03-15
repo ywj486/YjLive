@@ -18,7 +18,6 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +34,6 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 
 import com.ywj.yjlive.R;
 import com.ywj.yjlive.adapter.AudienceAdapter;
@@ -70,8 +68,6 @@ import tyrantgit.widget.HeartLayout;
  */
 public class LayerFragment extends Fragment implements View.OnClickListener {
 
-
-
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -88,7 +84,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
      */
     private boolean isOpen;
     private long liveTime;
-
 
     /**
      * 界面相关
@@ -126,13 +121,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
     @BindView(R.id.layout_bottom)
     FrameLayout layoutBottom;
 
-//    @BindView(R.id.tvSendone)
-//    private TextView tvSendone;
-
-//    private TextView tvSendtwo;
-//    private TextView tvSendthree;
-//    private TextView tvSendfor;
-
     /**
      * 动画相关
      */
@@ -161,10 +149,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
         mcontext= getActivity();
         getLove();
         tvChat.setOnClickListener(this);
-//        tvSendone.setOnClickListener(this);
-//        tvSendtwo.setOnClickListener(this);
-//        tvSendthree.setOnClickListener(this);
-//        tvSendfor.setOnClickListener(this);
         tvGift.setOnClickListener(this);
         sendInput.setOnClickListener(this);
         inAnim = (TranslateAnimation) AnimationUtils.loadAnimation(getActivity(), R.anim.gift_in);
@@ -244,7 +228,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
             WindowManager wm = (WindowManager) getContext()
                     .getSystemService(Context.WINDOW_SERVICE);
             int width = wm.getDefaultDisplay().getWidth();
-            Log.e("TAG","++++++++++++++++++++++++++++++++++++++++++++++width"+width);
             giftPopupWindow.showAsDropDown(lvmessage,0,-width/2);
 
         }
@@ -262,18 +245,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
             case R.id.tvGift://送礼
                 pople();
                 break;
-//            case R.id.tvSendone:/*礼物1*/
-//                showGift("Johnny1");
-//                break;
-//            case R.id.tvSendtwo:/*礼物2*/
-//                showGift("Johnny2");
-//                break;
-//            case R.id.tvSendthree:/*礼物3*/
-//                showGift("Johnny3");
-//                break;
-//            case R.id.tvSendfor:/*礼物4*/
-//                showGift("Johnny4");
-//                break;
         }
     }
 
@@ -631,7 +602,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
                 .getSystemService(Context.WINDOW_SERVICE);
         //DP转成Px
 
-        //1111111
         int width =wm.getDefaultDisplay().getWidth();
         //设置宽和高
         giftPopupWindow.setWidth(width);
@@ -641,7 +611,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
 
         View view=View.inflate(mcontext,R.layout.popwindow_gift,null);
 
-        // TODO: 2017/3/13
         final ViewPager popw_vp= (ViewPager) view.findViewById(R.id.popw_vp);
         popw_vp.setAdapter(new PagerAdapter() {
             @Override
@@ -653,7 +622,6 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
                     return count/8+1;
                 }
             }
-
             @Override
             public boolean isViewFromObject(View view, Object object) {
                 return view == object;
@@ -692,14 +660,8 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
                 return view;
             }
         });
-
-
-
-
         giftPopupWindow.setContentView(view);
-
     }
-
 
     void  getData(){
         Gift gift=new Gift() ;
@@ -713,5 +675,4 @@ public class LayerFragment extends Fragment implements View.OnClickListener {
             gifts.add(gift);
         }
     }
-
 }

@@ -20,7 +20,7 @@ import java.io.IOException;
  * Created by Administrator on 2017/3/13 0013.
  */
 
-public class LiveIngActivity extends FrameActivity {
+public class LiveActivity extends FrameActivity {
 
     private KSYMediaPlayer ksyMediaPlayer;
     private Surface mSurface = null;
@@ -46,7 +46,7 @@ public class LiveIngActivity extends FrameActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.livning_ing);
+        setContentView(R.layout.live_activity);
         initPlayer();
         LiveViewFragment liveViewFragment = new LiveViewFragment();
         getSupportFragmentManager().beginTransaction().add(R.id.flmain, liveViewFragment).commit();
@@ -81,4 +81,10 @@ public class LiveIngActivity extends FrameActivity {
         ksyMediaPlayer.prepareAsync();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        ksyMediaPlayer.stop();
+        ksyMediaPlayer.release();
+    }
 }
