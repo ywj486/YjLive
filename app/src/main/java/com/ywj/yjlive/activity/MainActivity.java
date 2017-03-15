@@ -1,5 +1,6 @@
 package com.ywj.yjlive.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -56,7 +57,7 @@ public class MainActivity extends FrameActivity {
         };
         content.setAdapter(mAdapter);
     }
-    @OnClick({R.id.home, R.id.mine})
+    @OnClick({R.id.home, R.id.mine,R.id.live})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.home:
@@ -64,6 +65,10 @@ public class MainActivity extends FrameActivity {
                 break;
             case R.id.mine:
                 content.setCurrentItem(1);
+                break;
+            case R.id.live:
+                Intent intent=new Intent(this,CameraActivity.class);
+                startActivity(intent);
                 break;
         }
     }

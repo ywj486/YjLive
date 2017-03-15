@@ -17,6 +17,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/MANIFEST.MF'
+
+    }
+
 }
 
 dependencies {
@@ -42,9 +54,9 @@ dependencies {
     compile 'com.zhy:okhttputils:2.6.2'
     compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
     compile 'tyrant:heartlayout:1.0.1'
-    compile files('libs/libksyplayer.jar')
-    compile files('libs/libksystat.jar')
     compile 'com.android.support:support-v4:25.0.0'
-    compile project(':playerlib')
-    compile files('F:/Users/Administrator/AndroidStudioProjects/YjLive/playerlib/libs/libksyplayer.jar')
+//    compile project(':playerlib')
+//    compile fileTree(include: '*/so', dir: 'libs/armeabi-v7a')
+//    compile fileTree(include: '*/so', dir: 'libs/arm64-v8a')
+//    compile fileTree(include: '*/so', dir: 'libs/x86')
 }
