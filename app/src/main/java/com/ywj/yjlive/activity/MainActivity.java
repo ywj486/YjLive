@@ -1,6 +1,5 @@
 package com.ywj.yjlive.activity;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -67,8 +66,12 @@ public class MainActivity extends FrameActivity {
                 content.setCurrentItem(1);
                 break;
             case R.id.live:
-                Intent intent=new Intent(this,CameraActivity.class);
-                startActivity(intent);
+//                Intent intent=new Intent(this,CameraActivity.class);
+//                startActivity(intent);
+                CameraActivity.startActivity(getApplicationContext(), 0,
+                        "rtmp://uplive.geekniu.com/live", 15, 800,
+                        48, 0, 1, 1,  3,
+                        1, 3, false, false);
                 break;
         }
     }
