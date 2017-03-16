@@ -1,4 +1,4 @@
-package com.ywj.yjlive.activity;
+package com.ywj.yjlive.live;
 
 import android.Manifest;
 import android.app.Activity;
@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.hardware.Camera;
 import android.hardware.SensorManager;
@@ -19,9 +18,6 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.widget.AppCompatSeekBar;
-import android.support.v7.widget.AppCompatSpinner;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.OrientationEventListener;
@@ -29,41 +25,42 @@ import android.view.Surface;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.CheckBox;
+import android.widget.ArrayAdapter;
 import android.widget.Chronometer;
-import android.widget.CompoundButton;
-import android.widget.LinearLayout;
+import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.ksyun.media.player.IMediaPlayer;
 import com.ksyun.media.streamer.capture.camera.CameraTouchHelper;
 import com.ksyun.media.streamer.filter.imgtex.ImgTexFilterBase;
 import com.ksyun.media.streamer.filter.imgtex.ImgTexFilterMgt;
 import com.ksyun.media.streamer.kit.KSYStreamer;
-import com.ksyun.media.streamer.kit.OnAudioRawDataListener;
-import com.ksyun.media.streamer.kit.OnPreviewFrameListener;
 import com.ksyun.media.streamer.kit.StreamerConstants;
 import com.ksyun.media.streamer.logstats.StatsLogReport;
-import com.ksyun.media.streamer.util.gles.GLRender;
 import com.ywj.yjlive.R;
-import com.ywj.yjlive.widget.CameraHintView;
+import com.ywj.yjlive.bean.RoomBean;
+import com.ywj.yjlive.http.Contants;
+import com.ywj.yjlive.utils.SharedPreferenceUtils;
+import com.ywj.yjlive.utils.ToastUtils;
+import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.callback.StringCallback;
 
-import java.io.BufferedOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import okhttp3.Call;
 
 public class CameraActivity extends Activity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = "CameraActivity";
 
+    private RelativeLayout click_torlt;
+    private EditText room_name;
     private GLSurfaceView mCameraPreviewView;
     //private TextureView mCameraPreviewView;
     private CameraHintView mCameraHintView;
@@ -72,36 +69,13 @@ public class CameraActivity extends Activity implements
     private View mSwitchCameraView;
     private View mFlashView;
     private TextView mShootingText;
-    private TextView mRecordingText;
-    private TextView mCaptureSceenShot;
-    private CheckBox mWaterMarkCheckBox;
-    private CheckBox mBeautyCheckBox;
-    private CheckBox mReverbCheckBox;
-    private CheckBox mAudioPreviewCheckBox;
-    private CheckBox mBgmCheckBox;
-    private CheckBox mMuteCheckBox;
-    private CheckBox mAudioOnlyCheckBox;
-    private CheckBox mFrontMirrorCheckBox;
-    private TextView mUrlTextView;
-    private TextView mDebugInfoTextView;
 
     private View mBeautyChooseView;
-    private AppCompatSpinner mBeautySpinner;
-    private LinearLayout mBeautyGrindLayout;
-    private TextView mGrindText;
-    private AppCompatSeekBar mGrindSeekBar;
-    private LinearLayout mBeautyWhitenLayout;
-    private TextView mWhitenText;
-    private AppCompatSeekBar mWhitenSeekBar;
-    private LinearLayout mBeautyRuddyLayout;
-    private TextView mRuddyText;
-    private AppCompatSeekBar mRuddySeekBar;
 
     private int mLastRotation;
     private OrientationEventListener mOrientationEventListener;
 
     private ButtonObserver mObserverButton;
-    private CheckBoxObserver mCheckBoxObserver;
 
     private KSYStreamer mStreamer;
     private Handler mMainHandler;
@@ -140,6 +114,8 @@ public class CameraActivity extends Activity implements
     public final static String ENCODE_PROFILE = "encode_profile";
     public final static String START_AUTO = "start_auto";
     public static final String SHOW_DEBUGINFO = "show_debuginfo";
+    public static final String USER_ID = "user_id";
+    private RoomBean roomBean;
 
     public static void startActivity(Context context, int fromType,
                                      String rtmpUrl, int frameRate,
@@ -176,20 +152,18 @@ public class CameraActivity extends Activity implements
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+
+
+        room_name = (EditText)findViewById(R.id.room_name);
+        click_torlt = (RelativeLayout)findViewById(R.id.click_torlt);
         mCameraHintView = (CameraHintView) findViewById(R.id.camera_hint);
         mCameraPreviewView = (GLSurfaceView) findViewById(R.id.camera_preview);
         //mCameraPreviewView = (TextureView) findViewById(R.id.camera_preview);
-        mUrlTextView = (TextView) findViewById(R.id.url);
         mChronometer = (Chronometer) findViewById(R.id.chronometer);
-        mDebugInfoTextView = (TextView) findViewById(R.id.debuginfo);
 
         mObserverButton = new ButtonObserver();
         mShootingText = (TextView) findViewById(R.id.click_to_shoot);
         mShootingText.setOnClickListener(mObserverButton);
-        mRecordingText = (TextView) findViewById(R.id.click_to_record);
-        mRecordingText.setOnClickListener(mObserverButton);
-        mCaptureSceenShot = (TextView) findViewById(R.id.click_to_capture_screenshot);
-        mCaptureSceenShot.setOnClickListener(mObserverButton);
         mDeleteView = findViewById(R.id.backoff);
         mDeleteView.setOnClickListener(mObserverButton);
         mSwitchCameraView = findViewById(R.id.switch_cam);
@@ -197,46 +171,19 @@ public class CameraActivity extends Activity implements
         mFlashView = findViewById(R.id.flash);
         mFlashView.setOnClickListener(mObserverButton);
 
-        mCheckBoxObserver = new CheckBoxObserver();
-        mBeautyCheckBox = (CheckBox) findViewById(R.id.click_to_switch_beauty);
-        mBeautyCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-        mReverbCheckBox = (CheckBox) findViewById(R.id.click_to_select_audio_filter);
-        mReverbCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-        mBgmCheckBox = (CheckBox) findViewById(R.id.bgm);
-        mBgmCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-        mAudioPreviewCheckBox = (CheckBox) findViewById(R.id.ear_mirror);
-        mAudioPreviewCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-        mMuteCheckBox = (CheckBox) findViewById(R.id.mute);
-        mMuteCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-        mWaterMarkCheckBox = (CheckBox) findViewById(R.id.watermark);
-        mWaterMarkCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-        mFrontMirrorCheckBox = (CheckBox) findViewById(R.id.front_camera_mirror);
-        mFrontMirrorCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-        mAudioOnlyCheckBox = (CheckBox) findViewById(R.id.audio_only);
-        mAudioOnlyCheckBox.setOnCheckedChangeListener(mCheckBoxObserver);
-
-        mBeautyChooseView = findViewById(R.id.beauty_choose);
-        mBeautySpinner = (AppCompatSpinner) findViewById(R.id.beauty_spin);
-        mBeautyGrindLayout = (LinearLayout) findViewById(R.id.beauty_grind);
-        mGrindText = (TextView) findViewById(R.id.grind_text);
-        mGrindSeekBar = (AppCompatSeekBar) findViewById(R.id.grind_seek_bar);
-        mBeautyWhitenLayout = (LinearLayout) findViewById(R.id.beauty_whiten);
-        mWhitenText = (TextView) findViewById(R.id.whiten_text);
-        mWhitenSeekBar = (AppCompatSeekBar) findViewById(R.id.whiten_seek_bar);
-        mBeautyRuddyLayout = (LinearLayout) findViewById(R.id.beauty_ruddy);
-        mRuddyText = (TextView) findViewById(R.id.ruddy_text);
-        mRuddySeekBar = (AppCompatSeekBar) findViewById(R.id.ruddy_seek_bar);
-
         mMainHandler = new Handler();
         mStreamer = new KSYStreamer(this);
+
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
-            String url = bundle.getString(URL);
-            if (!TextUtils.isEmpty(url)) {
-                mUrl = url;
-                mUrlTextView.setText(mUrl);
-                mStreamer.setUrl(url);
-            }
+
+//            String url = bundle.getString(URL);
+//            Log.e("TAG", "url==========="+url);
+//            if (!TextUtils.isEmpty(url)) {
+//                mUrl = url;
+//                Log.e("TAG", "murl=========="+url);
+//                mStreamer.setUrl(url);
+//            }
 
             int frameRate = bundle.getInt(FRAME_RATE, 0);
             if (frameRate > 0) {
@@ -313,9 +260,10 @@ public class CameraActivity extends Activity implements
         //}
         //断网等异常case触发自动重练
         mStreamer.setEnableAutoRestart(true, 3000);
-        mStreamer.setFrontCameraMirror(mFrontMirrorCheckBox.isChecked());
-        mStreamer.setMuteAudio(mMuteCheckBox.isChecked());
-        mStreamer.setEnableAudioPreview(mAudioPreviewCheckBox.isChecked());
+        mStreamer.setFrontCameraMirror(true);
+        mStreamer.setMuteAudio(true);
+        //设置耳返
+        mStreamer.setEnableAudioPreview(false);
         mStreamer.setOnInfoListener(mOnInfoListener);
         mStreamer.setOnErrorListener(mOnErrorListener);
         mStreamer.setOnLogEventListener(mOnLogEventListener);
@@ -323,9 +271,8 @@ public class CameraActivity extends Activity implements
         //mStreamer.setOnPreviewFrameListener(mOnPreviewFrameListener);
 
         // set beauty filter
-       // initBeautyUI();
+        initBeautyUI();
         if (mStreamer.getVideoEncodeMethod() == StreamerConstants.ENCODE_METHOD_SOFTWARE_COMPAT) {
-            mBeautyCheckBox.setChecked(true);
         }
         mStreamer.getImgTexFilterMgt().setOnErrorListener(new ImgTexFilterBase.OnErrorListener() {
             @Override
@@ -350,120 +297,19 @@ public class CameraActivity extends Activity implements
         cameraTouchHelper.setCameraHintView(mCameraHintView);
     }
 
-//    private void initBeautyUI() {
-//        String[] items = new String[]{"DISABLE", "BEAUTY_SOFT", "SKIN_WHITEN", "BEAUTY_ILLUSION",
-//                "BEAUTY_DENOISE", "BEAUTY_SMOOTH", "BEAUTY_PRO", "DEMO_FILTER", "GROUP_FILTER",
-//                "ToneCurve", "复古", "胶片"};
-//        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-//                android.R.layout.simple_spinner_item, items);
-//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        mBeautySpinner.setAdapter(adapter);
-//        mBeautySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//                TextView textView = ((TextView) parent.getChildAt(0));
-//                if (textView != null) {
-//                    textView.setTextColor(getResources().getColor(R.color.font_color_35));
-//                }
-//                if (position == 0) {
-//                    mStreamer.getImgTexFilterMgt().setFilter((ImgFilterBase) null);
-//                } else if (position <= 5) {
-//                    mStreamer.getImgTexFilterMgt().setFilter(
-//                            mStreamer.getGLRender(), position + 15);
-//                } else if (position == 6) {
-//                    mStreamer.getImgTexFilterMgt().setFilter(mStreamer.getGLRender(),
-//                            ImgTexFilterMgt.KSY_FILTER_BEAUTY_PRO);
-//                } else if (position == 7) {
-//                    mStreamer.getImgTexFilterMgt().setFilter(
-//                            new DemoFilter(mStreamer.getGLRender()));
-//                } else if (position == 8) {
-//                    List<ImgTexFilter> groupFilter = new LinkedList<>();
-//                    groupFilter.add(new DemoFilter2(mStreamer.getGLRender()));
-//                    groupFilter.add(new DemoFilter3(mStreamer.getGLRender()));
-//                    groupFilter.add(new DemoFilter4(mStreamer.getGLRender()));
-//                    mStreamer.getImgTexFilterMgt().setFilter(groupFilter);
-//                } else if (position == 9) {
-//                    ImgBeautyToneCurveFilter acvFilter = new ImgBeautyToneCurveFilter(mStreamer.getGLRender());
-//                    acvFilter.setFromCurveFileInputStream(
-//                            CameraActivity.this.getResources().openRawResource(R.raw.tone_cuver_sample));
-//
-//                    mStreamer.getImgTexFilterMgt().setFilter(acvFilter);
-//                } else if (position == 10) {
-//                    ImgBeautyToneCurveFilter acvFilter = new ImgBeautyToneCurveFilter(mStreamer.getGLRender());
-//                    acvFilter.setFromCurveFileInputStream(
-//                            CameraActivity.this.getResources().openRawResource(R.raw.fugu));
-//
-//                    mStreamer.getImgTexFilterMgt().setFilter(acvFilter);
-//                } else if (position == 11) {
-//                    ImgBeautyToneCurveFilter acvFilter = new ImgBeautyToneCurveFilter(mStreamer.getGLRender());
-//                    acvFilter.setFromCurveFileInputStream(
-//                            CameraActivity.this.getResources().openRawResource(R.raw.jiaopian));
-//
-//                    mStreamer.getImgTexFilterMgt().setFilter(acvFilter);
-//                }
-//                List<ImgFilterBase> filters = mStreamer.getImgTexFilterMgt().getFilter();
-//                if (filters != null && !filters.isEmpty()) {
-//                    final ImgFilterBase filter = filters.get(0);
-//                    mBeautyGrindLayout.setVisibility(filter.isGrindRatioSupported() ?
-//                            View.VISIBLE : View.GONE);
-//                    mBeautyWhitenLayout.setVisibility(filter.isWhitenRatioSupported() ?
-//                            View.VISIBLE : View.GONE);
-//                    mBeautyRuddyLayout.setVisibility(filter.isRuddyRatioSupported() ?
-//                            View.VISIBLE : View.GONE);
-//                    SeekBar.OnSeekBarChangeListener seekBarChangeListener =
-//                            new SeekBar.OnSeekBarChangeListener() {
-//                        @Override
-//                        public void onProgressChanged(SeekBar seekBar, int progress,
-//                                                      boolean fromUser) {
-//                            if (!fromUser) {
-//                                return;
-//                            }
-//                            float val = progress / 100.f;
-//                            if (seekBar == mGrindSeekBar) {
-//                                filter.setGrindRatio(val);
-//                            } else if (seekBar == mWhitenSeekBar) {
-//                                filter.setWhitenRatio(val);
-//                            } else if (seekBar == mRuddySeekBar) {
-//                                if (filter instanceof ImgBeautyProFilter) {
-//                                    val = progress / 50.f - 1.0f;
-//                                }
-//                                filter.setRuddyRatio(val);
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void onStartTrackingTouch(SeekBar seekBar) {
-//                        }
-//
-//                        @Override
-//                        public void onStopTrackingTouch(SeekBar seekBar) {
-//                        }
-//                    };
-//                    mGrindSeekBar.setOnSeekBarChangeListener(seekBarChangeListener);
-//                    mWhitenSeekBar.setOnSeekBarChangeListener(seekBarChangeListener);
-//                    mRuddySeekBar.setOnSeekBarChangeListener(seekBarChangeListener);
-//                    mGrindSeekBar.setProgress((int)(filter.getGrindRatio() * 100));
-//                    mWhitenSeekBar.setProgress((int)(filter.getWhitenRatio() * 100));
-//                    int ruddyVal = (int)(filter.getRuddyRatio() * 100);
-//                    if (filter instanceof ImgBeautyProFilter) {
-//                        ruddyVal = (int)(filter.getRuddyRatio() * 50 + 50);
-//                    }
-//                    mRuddySeekBar.setProgress(ruddyVal);
-//                } else {
-//                    mBeautyGrindLayout.setVisibility(View.GONE);
-//                    mBeautyWhitenLayout.setVisibility(View.GONE);
-//                    mBeautyRuddyLayout.setVisibility(View.GONE);
-//                }
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parent) {
-//                // do nothing
-//            }
-//        });
-//        mBeautySpinner.setPopupBackgroundResource(R.color.transparent1);
-//        mBeautySpinner.setSelection(4);
-//    }
+
+    /**
+     * 相机滤镜
+     */
+    private void initBeautyUI() {
+        String[] items = new String[]{"DISABLE", "BEAUTY_SOFT", "SKIN_WHITEN", "BEAUTY_ILLUSION",
+                "BEAUTY_DENOISE", "BEAUTY_SMOOTH", "BEAUTY_PRO", "DEMO_FILTER", "GROUP_FILTER",
+                "ToneCurve", "复古", "胶片"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+    }
 
     @Override
     public void onResume() {
@@ -475,9 +321,6 @@ public class CameraActivity extends Activity implements
         startCameraPreviewWithPermCheck();
         mStreamer.onResume();
         mStreamer.setUseDummyAudioCapture(false);
-        if (mWaterMarkCheckBox.isChecked()) {
-            showWaterMark();
-        }
         mCameraHintView.hideAll();
     }
 
@@ -534,29 +377,22 @@ public class CameraActivity extends Activity implements
         return 0;
     }
 
-    //start streaming
+    /**
+     * 开始推流直播的方法
+     */
     private void startStream() {
+        Log.e("TAG", "-----------");
+        Log.e("TAG", "mStreamer======"+mStreamer);
+        Log.e("TAG", "roomBean==="+roomBean);
+        // Log.e("TAG", "roomBean==="+roomBean.getResult().getId());
+//
+//
         mStreamer.startStream();
         mShootingText.setText(STOP_STRING);
         mShootingText.postInvalidate();
         mRecording = true;
     }
 
-    //start recording to a local file
-    private void startRecord() {
-        mStreamer.startRecord(mRecordUrl);
-        mRecordingText.setText(STOP_RECORDING);
-        mRecordingText.postInvalidate();
-        mIsFileRecording = true;
-    }
-
-    private void stopRecord() {
-        mStreamer.stopRecord();
-        mRecordingText.setText(START_RECORDING);
-        mRecordingText.postInvalidate();
-        mIsFileRecording = false;
-        stopChronometer();
-    }
 
     private void stopChronometer() {
         if (mRecording || mIsFileRecording) {
@@ -566,6 +402,10 @@ public class CameraActivity extends Activity implements
         mChronometer.stop();
     }
 
+
+    /**
+     * 停止推流的方法
+     */
     private void stopStream() {
         mStreamer.stopStream();
         mShootingText.setText(START_STRING);
@@ -581,12 +421,6 @@ public class CameraActivity extends Activity implements
                 @Override
                 public void run() {
                     updateDebugInfo();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mDebugInfoTextView.setText(mDebugInfo);
-                        }
-                    });
                 }
             }, 100, 1000);
         }
@@ -606,6 +440,9 @@ public class CameraActivity extends Activity implements
                 mStreamer.getCurrentUploadKBitrate(), KSYStreamer.getVersion());
     }
 
+    /**
+     * 水印
+     */
     //show watermark in specific location
     private void showWaterMark() {
         if (!mIsLandscape) {
@@ -617,10 +454,15 @@ public class CameraActivity extends Activity implements
         }
     }
 
+    /**
+     * 水印
+     */
     private void hideWaterMark() {
         mStreamer.hideWaterMarkLogo();
         mStreamer.hideWaterMarkTime();
     }
+
+
 
     // Example to handle camera related operation
     private void setCameraAntiBanding50Hz() {
@@ -689,8 +531,6 @@ public class CameraActivity extends Activity implements
             if (mHWEncoderUnsupported) {
                 mStreamer.setEncodeMethod(
                         StreamerConstants.ENCODE_METHOD_SOFTWARE_COMPAT);
-                onBeautyChecked(mBeautyCheckBox.isChecked());
-                Log.e(TAG, "Got SW encoder error, switch to SOFTWARE_COMPAT mode");
             } else {
                 mStreamer.setEncodeMethod(StreamerConstants.ENCODE_METHOD_HARDWARE);
                 Log.e(TAG, "Got SW encoder error, switch to HARDWARE mode");
@@ -772,21 +612,20 @@ public class CameraActivity extends Activity implements
                 case StreamerConstants.KSY_STREAMER_FILE_PUBLISHER_OPEN_FAILED:
                 case StreamerConstants.KSY_STREAMER_FILE_PUBLISHER_FORMAT_NOT_SUPPORTED:
                 case StreamerConstants.KSY_STREAMER_FILE_PUBLISHER_WRITE_FAILED:
-                    stopRecord();
                     break;
                 case StreamerConstants.KSY_STREAMER_VIDEO_ENCODER_ERROR_UNSUPPORTED:
                 case StreamerConstants.KSY_STREAMER_VIDEO_ENCODER_ERROR_UNKNOWN:
-                    {
-                        handleEncodeError();
-                        stopStream();
-                        mMainHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                startStream();
-                            }
-                        }, 3000);
-                    }
-                    break;
+                {
+                    handleEncodeError();
+                    stopStream();
+                    mMainHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startStream();
+                        }
+                    }, 3000);
+                }
+                break;
                 default:
                     if(mStreamer.getEnableAutoRestart()) {
                         mShootingText.setText(START_STRING);
@@ -815,22 +654,7 @@ public class CameraActivity extends Activity implements
                 }
             };
 
-    private OnAudioRawDataListener mOnAudioRawDataListener = new OnAudioRawDataListener() {
-        @Override
-        public short[] OnAudioRawData(short[] data, int count) {
-            Log.d(TAG, "OnAudioRawData data.length=" + data.length + " count=" + count);
-            //audio pcm data
-            return data;
-        }
-    };
 
-    private OnPreviewFrameListener mOnPreviewFrameListener = new OnPreviewFrameListener() {
-        @Override
-        public void onPreviewFrame(byte[] data, int width, int height, boolean isRecording) {
-            Log.d(TAG, "onPreviewFrame data.length=" + data.length + " " +
-                    width + "x" + height + " mRecording=" + isRecording);
-        }
-    };
 
     private void onSwitchCamera() {
         mStreamer.switchCamera();
@@ -860,6 +684,7 @@ public class CameraActivity extends Activity implements
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface arg0, int arg1) {
+                        updatestate(Long.toString(room_name.getId()),"1");
                         mChronometer.stop();
                         mRecording = false;
                         CameraActivity.this.finish();
@@ -867,80 +692,31 @@ public class CameraActivity extends Activity implements
                 }).show();
     }
 
+
+    /**
+     *
+     * 开始直播和停止直播控制
+     */
     private void onShootClick() {
         if (mRecording) {
             stopStream();
         } else {
             startStream();
+            //onAudioOnlyChecked(true);
         }
     }
 
-    private void onRecordClick() {
-        if (mIsFileRecording) {
-            stopRecord();
-        } else {
-            startRecord();
-        }
-    }
+
 
     private boolean[] mChooseFilter = {false, false};
 
-//    private void showChooseAudioFilter() {
-//        AlertDialog alertDialog;
-//        alertDialog = new AlertDialog.Builder(this)
-//                .setTitle("请选择音频滤镜")
-//                .setMultiChoiceItems(
-//                        new String[]{"REVERB", "DEMO",}, mChooseFilter,
-//                        new DialogInterface.OnMultiChoiceClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-//                                if (isChecked) {
-//                                    mChooseFilter[which] = true;
-//                                }
-//                            }
-//                        }
-//                ).setPositiveButton("确定", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        if (mChooseFilter[0] && mChooseFilter[1]) {
-//                            List<AudioFilterBase> filters = new LinkedList<>();
-//                            AudioReverbFilter reverbFilter = new AudioReverbFilter();
-//                            DemoAudioFilter demofilter = new DemoAudioFilter();
-//                            filters.add(reverbFilter);
-//                            filters.add(demofilter);
-//                            mStreamer.getAudioFilterMgt().setFilter(filters);
-//                        } else if (mChooseFilter[0]) {
-//                            AudioReverbFilter reverbFilter = new AudioReverbFilter();
-//                            mStreamer.getAudioFilterMgt().setFilter(reverbFilter);
-//                        } else if (mChooseFilter[1]) {
-//                            DemoAudioFilter demofilter = new DemoAudioFilter();
-//                            mStreamer.getAudioFilterMgt().setFilter(demofilter);
-//                        } else {
-//                            mStreamer.getAudioFilterMgt().setFilter((AudioFilterBase) null);
-//                        }
-//                        dialog.dismiss();
-//                    }
-//                })
-//                .create();
-//        alertDialog.setCancelable(false);
-//        alertDialog.show();
-//    }
 
-    private void onBeautyChecked(boolean isChecked) {
-        if (mStreamer.getVideoEncodeMethod() == StreamerConstants.ENCODE_METHOD_SOFTWARE_COMPAT) {
-            mStreamer.getImgTexFilterMgt().setFilter(mStreamer.getGLRender(), isChecked ?
-                    ImgTexFilterMgt.KSY_FILTER_BEAUTY_DENOISE :
-                    ImgTexFilterMgt.KSY_FILTER_BEAUTY_DISABLE);
-            mStreamer.setEnableImgBufBeauty(isChecked);
-        } else {
-            mBeautyChooseView.setVisibility(isChecked ? View.VISIBLE : View.INVISIBLE);
-        }
-    }
 
-    private void onAudioFilterChecked(boolean isChecked) {
-       // showChooseAudioFilter();
-    }
 
+    /**
+     * 背景音乐
+     * @param isChecked
+     */
     private void onBgmChecked(boolean isChecked) {
         if (isChecked) {
             // use KSYMediaPlayer instead of KSYBgmPlayer
@@ -968,13 +744,25 @@ public class CameraActivity extends Activity implements
         }
     }
 
+
+    /**
+     * 设置耳返
+     * @param isChecked
+     */
     private void onAudioPreviewChecked(boolean isChecked) {
         mStreamer.setEnableAudioPreview(isChecked);
     }
 
+
+    /**
+     * 控制是否静音
+     * @param isChecked
+     */
     private void onMuteChecked(boolean isChecked) {
         mStreamer.setMuteAudio(isChecked);
     }
+
+
 
     private void onWaterMarkChecked(boolean isChecked) {
         if (isChecked)
@@ -983,46 +771,25 @@ public class CameraActivity extends Activity implements
             hideWaterMark();
     }
 
+
+    /**
+     * 设置默认相机
+     * @param isChecked
+     */
     private void onFrontMirrorChecked(boolean isChecked) {
         mStreamer.setFrontCameraMirror(isChecked);
     }
 
+
+    /**
+     * 设置音频推流
+     * @param isChecked
+     */
     private void onAudioOnlyChecked(boolean isChecked) {
         mStreamer.setAudioOnly(isChecked);
     }
 
-    private void onCaptureScreenShotClick() {
-        mStreamer.requestScreenShot(new GLRender.ScreenShotListener() {
-            @Override
-            public void onBitmapAvailable(Bitmap bitmap) {
-                BufferedOutputStream bos = null;
-                try {
-                    Date date = new Date() ;
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss") ;
-                    final String filename = "/sdcard/screenshot"+ dateFormat.format(date) + ".jpg";
 
-                    bos = new BufferedOutputStream(new FileOutputStream(filename));
-                    if (bitmap != null) {
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, bos);
-                        runOnUiThread(new Runnable() {
-                            public void run() {
-                                Toast.makeText(CameraActivity.this, "保存截图到 "+ filename,
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (bos != null) try {
-                        bos.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-    }
 
     private class ButtonObserver implements View.OnClickListener {
         @Override
@@ -1038,13 +805,9 @@ public class CameraActivity extends Activity implements
                     onFlashClick();
                     break;
                 case R.id.click_to_shoot:
-                    onShootClick();
-                    break;
-                case R.id.click_to_record:
-                    onRecordClick();
-                    break;
-                case R.id.click_to_capture_screenshot:
-                    onCaptureScreenShotClick();
+                    Log.e("TAG", "------------点击开始-----------");
+                    careateRoom();
+//                    onShootClick();
                     break;
                 default:
                     break;
@@ -1052,40 +815,6 @@ public class CameraActivity extends Activity implements
         }
     }
 
-    private class CheckBoxObserver implements CompoundButton.OnCheckedChangeListener {
-
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            switch (buttonView.getId()) {
-                case R.id.click_to_switch_beauty:
-                    onBeautyChecked(isChecked);
-                    break;
-                case R.id.click_to_select_audio_filter:
-                    onAudioFilterChecked(isChecked);
-                    break;
-                case R.id.bgm:
-                    onBgmChecked(isChecked);
-                    break;
-                case R.id.ear_mirror:
-                    onAudioPreviewChecked(isChecked);
-                    break;
-                case R.id.mute:
-                    onMuteChecked(isChecked);
-                    break;
-                case R.id.watermark:
-                    onWaterMarkChecked(isChecked);
-                    break;
-                case R.id.front_camera_mirror:
-                    onFrontMirrorChecked(isChecked);
-                    break;
-                case R.id.audio_only:
-                    onAudioOnlyChecked(isChecked);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
 
     private void startCameraPreviewWithPermCheck() {
         int cameraPerm = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
@@ -1126,4 +855,72 @@ public class CameraActivity extends Activity implements
             }
         }
     }
+
+
+    /**
+     * 创建直播房间并开始直播
+     */
+
+    private  void  careateRoom(){
+        String name =room_name.getText().toString() ;
+        if(name!=null) {
+            click_torlt.setVisibility(View.GONE);
+            mDeleteView.setVisibility(View.VISIBLE);
+            OkHttpUtils.post()
+                    .url(Contants.API.CREATE_LIVE)
+                    .addParams("uid", SharedPreferenceUtils.getString(CameraActivity.this,"userId"))
+                    .addParams("pic",Contants.PIC)
+                    .addParams("live_name",name)
+                    .addParams("live_type","0")
+                    .build()
+                    .execute(new StringCallback() {
+                        @Override
+                        public void onError(Call call, Exception e, int id) {
+                            ToastUtils.show(CameraActivity.this,"创建房间网络请求失败");
+                        }
+
+                        @Override
+                        public void onResponse(String response, int id) {
+                            Gson gson=new Gson();
+                            Log.e("TAG", "888888888888888888888888888888"+response);
+                            roomBean = gson.fromJson(response, RoomBean.class);
+                            if(0== roomBean.getError_code()) {
+                                StringBuilder sb = new StringBuilder(Contants.PULL_STREAMER);
+                                sb.append(roomBean.getResult().getId());
+                                mStreamer.setUrl(sb.toString());
+                                ToastUtils.show(CameraActivity.this,"创建房间成功");
+                                updatestate(Long.toString(roomBean.getResult().getId()),"0");
+                            Log.e("TAG", "推流地址========="+mUrl+roomBean.getResult().getId());
+                            }
+                        }
+                    });
+
+        }
+
+    }
+
+
+    /**
+     * 更改直播状态
+     */
+
+    private void updatestate(String live_id,String state){
+        OkHttpUtils.post()
+                .url(Contants.API.UPDATE_LIVE_STATUS)
+                .addParams("live_id",live_id)
+                .addParams("status",state)
+                .build()
+                .execute(new StringCallback() {
+                    @Override
+                    public void onError(Call call, Exception e, int id) {
+                        ToastUtils.show(CameraActivity.this,"网络连接异常");
+                    }
+                    @Override
+                    public void onResponse(String response, int id) {
+                        ToastUtils.show(CameraActivity.this,"网络连接异常");
+                        onShootClick();
+                    }
+                });
+    }
+
 }

@@ -62,9 +62,6 @@ import tyrantgit.widget.HeartLayout;
 /**
  * 该Fragment是用于dialogFragment中的pager，为了实现滑动隐藏交互Fragment的
  * 交互的操作都在这个界面实现的，如果大家要改交互主要修改这个界面就可以了
- * <p>
- * Success is the sum of small efforts, repeated day in and day out.
- * 成功就是日复一日那一点点小小努力的积累。
  */
 public class LayerFragment extends Fragment implements View.OnClickListener {
 

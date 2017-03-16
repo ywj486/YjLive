@@ -12,13 +12,11 @@ import android.view.ViewGroup;
 
 import com.ywj.yjlive.R;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
-
-
 import java.util.ArrayList;
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by Administrator on 2017/3/8 0008.
@@ -75,8 +73,6 @@ public class TopFragmentTabLayout extends Fragment {
         };
         mViewPager.setAdapter(mAdapter);
         initTabLine();
-
-
     }
     private void initTabLine() {
         mTabLayout.setupWithViewPager(mViewPager);

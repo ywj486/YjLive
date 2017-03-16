@@ -1,4 +1,4 @@
-package com.ywj.yjlive.widget;
+package com.ywj.yjlive.live;
 
 import android.content.Context;
 import android.graphics.Canvas;

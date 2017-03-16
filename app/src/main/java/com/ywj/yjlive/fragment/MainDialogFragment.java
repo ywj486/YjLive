@@ -26,13 +26,10 @@ import butterknife.ButterKnife;
  * TransparentFragment：什么都没有
  * layerFragment：交互界面
  * 这样就达到了滑动隐藏交互的需求，这样做也是为了避免我们自定义动画时，显示卡顿的问题
- * <p>
- * Success is the sum of small efforts, repeated day in and day out.
- * 成功就是日复一日那一点点小小努力的积累。
+ *
  */
 
 public class MainDialogFragment extends DialogFragment {
-
 
     @BindView(R.id.viewpager)
     ViewPager viewpager;

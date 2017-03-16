@@ -86,7 +86,7 @@ public class RegisterActivity extends BaseActivity {
 
         OkHttpUtils.post()
                 .url(Contants.API.REGISTER)
-                .addParams("phonjke", phone)
+                .addParams("phone", phone)
                 .addParams("user_name", name)
                 .addParams("avatar", heard)
                 .addParams("sign", "486.")

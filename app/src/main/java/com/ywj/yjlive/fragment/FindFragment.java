@@ -1,13 +1,13 @@
 package com.ywj.yjlive.fragment;
 
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,7 +43,12 @@ public class FindFragment extends Fragment {
     @BindView(R.id.find_refresh)
     MaterialRefreshLayout mRefreshLayout;
     private HotAdapter mAdapter;
-    int page =1;
+    int page = 1;
+    private SharedPreferences settings;
+    private String path;
+    private Live liveing;
+    private List<Live.ResultBean.ListBean> list;
+
     public static FindFragment newInstance() {
         FindFragment fragment = new FindFragment();
         return fragment;
@@ -64,18 +69,16 @@ public class FindFragment extends Fragment {
         mRefreshLayout.setMaterialRefreshListener(new MaterialRefreshListener() {
             @Override
             public void onRefresh(MaterialRefreshLayout materialRefreshLayout) {
-                Log.e("TAG", "上拉刷新");
                 refreshDate();
                 mRefreshLayout.finishRefresh();
             }
 
             @Override
             public void onRefreshLoadMore(MaterialRefreshLayout materialRefreshLayout) {
-                Log.e("TAG", "下拉加载");
                 if (page == 0) {
                     loadMoreData();
                 } else {
-                    Toast.makeText(getContext(), "已经没有跟多数据了", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "已经没有更多数据了", Toast.LENGTH_SHORT).show();
                 }
                 mRefreshLayout.finishRefreshLoadMore();
             }
@@ -109,9 +112,7 @@ public class FindFragment extends Fragment {
                     public void onResponse(String response, int id) {
                         Gson gson = new Gson();
                         Live live = gson.fromJson(response, Live.class);
-                        Log.e("TAG", live.getResult().getList().get(0).getData().getLive_name());
 
-                        Log.e("TAG", "=======================" + live.getResult().getList().size());
                         List<Live.ResultBean.ListBean> datas = live.getResult().getList();
                         mAdapter = new HotAdapter(getContext(), datas);
                         mRecyclerView.setAdapter(mAdapter);
@@ -122,11 +123,32 @@ public class FindFragment extends Fragment {
                         mAdapter.setmOnItemClickListener(new BaseAdapter.OnItemClickListener() {
                             @Override
                             public void onItemClick(View view, int position) {
-
+//                                path = Contants.PUSH_STREAMER+list.get(position).getId();
+//                                Log.e("TAG", "path==="+path);
+//
+//                                NetDb = new NetDbAdapter(getActivity());
+//                                NetDb.open();
+//
+//                                if (NetDb.getData(path)) {
+//                                    NetDb.updateData(path);
+//                                } else {
+//                                    NetDb.createDate(path);
+//                                }
+//                                NetDb.close();
+//                                String playerType = "live";
+//                                if (playerType.equals(Settings.VOD)) {
+//                                    Intent intent = new Intent(getActivity(), TextureVodActivity.class);
+//                                    intent.putExtra("path", path);
+//                                    startActivity(intent);
+//                                } else {
+//                                    Intent intent = new Intent(getActivity(), TextureVideoActivity.class);
+//                                    intent.putExtra("path", path);
+//                                    startActivity(intent);
+//                                }
                             }
                         });
-
                     }
                 });
+
     }
 }

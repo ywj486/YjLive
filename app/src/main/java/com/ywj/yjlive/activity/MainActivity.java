@@ -1,5 +1,6 @@
 package com.ywj.yjlive.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -13,6 +14,9 @@ import com.ywj.yjlive.R;
 import com.ywj.yjlive.activity.base.FrameActivity;
 import com.ywj.yjlive.fragment.MeFragment;
 import com.ywj.yjlive.fragment.TopFragmentTabLayout;
+import com.ywj.yjlive.http.Contants;
+import com.ywj.yjlive.live.CameraActivity;
+import com.ywj.yjlive.utils.SharedPreferenceUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +36,10 @@ public class MainActivity extends FrameActivity {
     @BindView(R.id.content)
     ViewPager content;
     private FragmentPagerAdapter mAdapter;
+    private int userId;
 
     private List<Fragment> mFragments = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,7 +47,8 @@ public class MainActivity extends FrameActivity {
         ButterKnife.bind(this);
         initView();
     }
-    private void initView(){
+
+    private void initView() {
         mFragments.add(TopFragmentTabLayout.newInstance());
         mFragments.add(new MeFragment());
         mAdapter = new FragmentPagerAdapter(this.getSupportFragmentManager()) {
@@ -49,6 +56,7 @@ public class MainActivity extends FrameActivity {
             public int getCount() {
                 return mFragments.size();
             }
+
             @Override
             public Fragment getItem(int arg0) {
                 return mFragments.get(arg0);
@@ -56,7 +64,8 @@ public class MainActivity extends FrameActivity {
         };
         content.setAdapter(mAdapter);
     }
-    @OnClick({R.id.home, R.id.mine,R.id.live})
+
+    @OnClick({R.id.home, R.id.mine, R.id.live})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.home:
@@ -68,19 +77,25 @@ public class MainActivity extends FrameActivity {
             case R.id.live:
 //                Intent intent=new Intent(this,CameraActivity.class);
 //                startActivity(intent);
-                CameraActivity.startActivity(getApplicationContext(), 0,
-                        "rtmp://uplive.geekniu.com/live", 15, 800,
-                        48, 0, 1, 1,  3,
-                        1, 3, false, false);
+                String id = SharedPreferenceUtils.getString(MainActivity.this, "userId");
+
+                if (id == null) {
+                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                } else {
+                    CameraActivity.startActivity(MainActivity.this, 0, Contants.PULL_STREAMER + MainActivity.this.userId
+                            , 15, 800, 48, 0, 1, 1, 3, 1, 3, false, false);
+                }
+
                 break;
         }
     }
-    private   long firstTime = 0;
+
+    private long firstTime = 0;
+
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         // TODO Auto-generated method stub
-        switch(keyCode)
-        {
+        switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
                 long secondTime = System.currentTimeMillis();
                 if (secondTime - firstTime > 2000) {                                         //如果两次按键时间间隔大于2秒，则不退出
