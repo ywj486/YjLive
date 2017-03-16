@@ -15,6 +15,7 @@ import com.ywj.yjlive.activity.base.BaseActivity;
 import com.ywj.yjlive.bean.LoginBean;
 import com.ywj.yjlive.http.Contants;
 import com.ywj.yjlive.utils.RegexTools;
+import com.ywj.yjlive.utils.SharedPreferenceUtils;
 import com.ywj.yjlive.utils.ToastUtils;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
@@ -114,6 +115,8 @@ public class LoginActivity extends BaseActivity {
 
                         if (userBean.getResult() != null) {
                             Toast.makeText(LoginActivity.this, "登录成功！！！", Toast.LENGTH_SHORT).show();
+                           //sp保存userId
+                            SharedPreferenceUtils.putString(LoginActivity.this,"userId",userBean.getResult().getId()+"");
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
