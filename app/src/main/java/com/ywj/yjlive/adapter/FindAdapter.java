@@ -2,7 +2,6 @@ package com.ywj.yjlive.adapter;
 
 import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.ywj.yjlive.R;
@@ -30,7 +29,6 @@ public class FindAdapter extends SimpleAdapter<PlayInfo> {
         holder.getTextView(R.id.hot_find_tv_state).setText(item.getStatus());
         holder.getTextView(R.id.hot_find_tv_hName).setText(item.getName());
         holder.getTextView(R.id.hot_find_tv_hSite).setText(item.getPlace());
-        Log.e("TAG","进convert来了---------------------------------");
 
 
     }

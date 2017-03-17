@@ -1,6 +1,8 @@
 package com.ywj.yjlive.fragment;
 
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -17,12 +19,14 @@ import com.cjj.MaterialRefreshLayout;
 import com.cjj.MaterialRefreshListener;
 import com.google.gson.Gson;
 import com.ywj.yjlive.R;
-import com.ywj.yjlive.activity.LiveActivity;
-import com.ywj.yjlive.activity.MainActivity;
 import com.ywj.yjlive.adapter.HotAdapter;
 import com.ywj.yjlive.adapter.base.BaseAdapter;
 import com.ywj.yjlive.adapter.decoration.DividerItemDecoration;
 import com.ywj.yjlive.bean.Live;
+import com.ywj.yjlive.fun_sdk.NetDbAdapter;
+import com.ywj.yjlive.fun_sdk.Settings;
+import com.ywj.yjlive.fun_sdk.TextureVideoActivity;
+import com.ywj.yjlive.fun_sdk.TextureVodActivity;
 import com.ywj.yjlive.http.Contants;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
@@ -35,6 +39,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import okhttp3.Call;
 
+
 /**
  * Created by yj on 17/3/8.
  */
@@ -45,7 +50,11 @@ public class HotFragment extends Fragment {
     @BindView(R.id.hot_refresh)
     MaterialRefreshLayout mRefreshLayout;
     private HotAdapter mAdapter;
+    private List<Live.ResultBean.ListBean> list;
+    private NetDbAdapter NetDb;
+    private SharedPreferences settings;
     int page = 1;
+    String path;
 
     public static HotFragment newInstance() {
         HotFragment fragment = new HotFragment();
@@ -78,7 +87,7 @@ public class HotFragment extends Fragment {
                 if (page == 0) {
                     loadMoreData();
                 } else {
-                    Toast.makeText(getContext(), "已经没有跟多数据了", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "已经没有更多数据了", Toast.LENGTH_SHORT).show();
                 }
                 mRefreshLayout.finishRefreshLoadMore();
             }
@@ -112,24 +121,56 @@ public class HotFragment extends Fragment {
                     public void onResponse(String response, int id) {
                         Gson gson = new Gson();
                         Live live = gson.fromJson(response, Live.class);
-                        List<Live.ResultBean.ListBean> datas = live.getResult().getList();
-                        mAdapter = new HotAdapter(getContext(), datas);
-                        mRecyclerView.setAdapter(mAdapter);
-                        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-                        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-                        mRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),
-                                DividerItemDecoration.VERTICAL_LIST));
-                        mAdapter.setmOnItemClickListener(new BaseAdapter.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(View view, int position) {
-                                MainActivity activity = (MainActivity) getActivity();
-                                activity.openActivity(LiveActivity.class);
+                        if (live != null) {
+                            if (live.getResult().getList() != null) {
+                                list = live.getResult().getList();
+                                showData();
                             }
-                        });
+                        }
 
                     }
                 });
     }
 
+    private void showData() {
+        if (mAdapter == null) {
+            mAdapter = new HotAdapter(getContext(), list);
+        } else {
+            mAdapter.clearData();
+            mAdapter.addData(list);
+        }
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),
+                DividerItemDecoration.VERTICAL_LIST));
+        mAdapter.setmOnItemClickListener(new BaseAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+//                                MainActivity activity = (MainActivity) getActivity();
+//                                activity.openActivity(LiveActivity.class);
+                path = Contants.PUSH_STREAMER + list.get(position).getId();
+                Log.e("TAG", "path===" + path);
+                NetDb = new NetDbAdapter(getActivity());
+                NetDb.open();
 
+                if (NetDb.getData(path)) {
+                    NetDb.updateData(path);
+                } else {
+                    NetDb.createDate(path);
+                }
+                NetDb.close();
+                String playerType = "live";
+                if (playerType.equals(Settings.VOD)) {
+                    Intent intent = new Intent(getActivity(), TextureVodActivity.class);
+                    intent.putExtra("path", path);
+                    startActivity(intent);
+                } else {
+                    Intent intent = new Intent(getActivity(), TextureVideoActivity.class);
+                    intent.putExtra("path", path);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
 }

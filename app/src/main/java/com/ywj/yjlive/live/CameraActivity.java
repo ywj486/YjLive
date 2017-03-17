@@ -153,9 +153,8 @@ public class CameraActivity extends Activity implements
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 
-
-        room_name = (EditText)findViewById(R.id.room_name);
-        click_torlt = (RelativeLayout)findViewById(R.id.click_torlt);
+        room_name = (EditText) findViewById(R.id.room_name);
+        click_torlt = (RelativeLayout) findViewById(R.id.click_torlt);
         mCameraHintView = (CameraHintView) findViewById(R.id.camera_hint);
         mCameraPreviewView = (GLSurfaceView) findViewById(R.id.camera_preview);
         //mCameraPreviewView = (TextureView) findViewById(R.id.camera_preview);
@@ -261,7 +260,7 @@ public class CameraActivity extends Activity implements
         //断网等异常case触发自动重练
         mStreamer.setEnableAutoRestart(true, 3000);
         mStreamer.setFrontCameraMirror(true);
-        mStreamer.setMuteAudio(true);
+        mStreamer.setMuteAudio(false);
         //设置耳返
         mStreamer.setEnableAudioPreview(false);
         mStreamer.setOnInfoListener(mOnInfoListener);
@@ -381,16 +380,13 @@ public class CameraActivity extends Activity implements
      * 开始推流直播的方法
      */
     private void startStream() {
-        Log.e("TAG", "-----------");
-        Log.e("TAG", "mStreamer======"+mStreamer);
-        Log.e("TAG", "roomBean==="+roomBean);
-        // Log.e("TAG", "roomBean==="+roomBean.getResult().getId());
-//
-//
+        Log.e("TAG", "mStreamer======" + mStreamer);
+        Log.e("TAG", "roomBean===" + roomBean);
         mStreamer.startStream();
         mShootingText.setText(STOP_STRING);
         mShootingText.postInvalidate();
         mRecording = true;
+        updatestate(Long.toString(roomBean.getResult().getId()), "0");
     }
 
 
@@ -412,6 +408,8 @@ public class CameraActivity extends Activity implements
         mShootingText.postInvalidate();
         mRecording = false;
         stopChronometer();
+        updatestate(Long.toString(roomBean.getResult().getId()), "1");
+
     }
 
     private void beginInfoUploadTimer() {
@@ -461,7 +459,6 @@ public class CameraActivity extends Activity implements
         mStreamer.hideWaterMarkLogo();
         mStreamer.hideWaterMarkTime();
     }
-
 
 
     // Example to handle camera related operation
@@ -614,8 +611,7 @@ public class CameraActivity extends Activity implements
                 case StreamerConstants.KSY_STREAMER_FILE_PUBLISHER_WRITE_FAILED:
                     break;
                 case StreamerConstants.KSY_STREAMER_VIDEO_ENCODER_ERROR_UNSUPPORTED:
-                case StreamerConstants.KSY_STREAMER_VIDEO_ENCODER_ERROR_UNKNOWN:
-                {
+                case StreamerConstants.KSY_STREAMER_VIDEO_ENCODER_ERROR_UNKNOWN: {
                     handleEncodeError();
                     stopStream();
                     mMainHandler.postDelayed(new Runnable() {
@@ -627,7 +623,7 @@ public class CameraActivity extends Activity implements
                 }
                 break;
                 default:
-                    if(mStreamer.getEnableAutoRestart()) {
+                    if (mStreamer.getEnableAutoRestart()) {
                         mShootingText.setText(START_STRING);
                         mShootingText.postInvalidate();
                         mRecording = false;
@@ -653,7 +649,6 @@ public class CameraActivity extends Activity implements
                     Log.i(TAG, "***onLogEvent : " + singleLogContent.toString());
                 }
             };
-
 
 
     private void onSwitchCamera() {
@@ -684,7 +679,7 @@ public class CameraActivity extends Activity implements
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface arg0, int arg1) {
-                        updatestate(Long.toString(room_name.getId()),"1");
+                        updatestate(Long.toString(room_name.getId()), "1");
                         mChronometer.stop();
                         mRecording = false;
                         CameraActivity.this.finish();
@@ -694,7 +689,6 @@ public class CameraActivity extends Activity implements
 
 
     /**
-     *
      * 开始直播和停止直播控制
      */
     private void onShootClick() {
@@ -707,14 +701,12 @@ public class CameraActivity extends Activity implements
     }
 
 
-
     private boolean[] mChooseFilter = {false, false};
-
-
 
 
     /**
      * 背景音乐
+     *
      * @param isChecked
      */
     private void onBgmChecked(boolean isChecked) {
@@ -747,6 +739,7 @@ public class CameraActivity extends Activity implements
 
     /**
      * 设置耳返
+     *
      * @param isChecked
      */
     private void onAudioPreviewChecked(boolean isChecked) {
@@ -756,12 +749,12 @@ public class CameraActivity extends Activity implements
 
     /**
      * 控制是否静音
+     *
      * @param isChecked
      */
     private void onMuteChecked(boolean isChecked) {
         mStreamer.setMuteAudio(isChecked);
     }
-
 
 
     private void onWaterMarkChecked(boolean isChecked) {
@@ -774,6 +767,7 @@ public class CameraActivity extends Activity implements
 
     /**
      * 设置默认相机
+     *
      * @param isChecked
      */
     private void onFrontMirrorChecked(boolean isChecked) {
@@ -783,12 +777,12 @@ public class CameraActivity extends Activity implements
 
     /**
      * 设置音频推流
+     *
      * @param isChecked
      */
     private void onAudioOnlyChecked(boolean isChecked) {
         mStreamer.setAudioOnly(isChecked);
     }
-
 
 
     private class ButtonObserver implements View.OnClickListener {
@@ -805,9 +799,7 @@ public class CameraActivity extends Activity implements
                     onFlashClick();
                     break;
                 case R.id.click_to_shoot:
-                    Log.e("TAG", "------------点击开始-----------");
                     careateRoom();
-//                    onShootClick();
                     break;
                 default:
                     break;
@@ -861,36 +853,36 @@ public class CameraActivity extends Activity implements
      * 创建直播房间并开始直播
      */
 
-    private  void  careateRoom(){
-        String name =room_name.getText().toString() ;
-        if(name!=null) {
+    private void careateRoom() {
+        String name = room_name.getText().toString();
+        if (name != null) {
             click_torlt.setVisibility(View.GONE);
             mDeleteView.setVisibility(View.VISIBLE);
             OkHttpUtils.post()
                     .url(Contants.API.CREATE_LIVE)
-                    .addParams("uid", SharedPreferenceUtils.getString(CameraActivity.this,"userId"))
-                    .addParams("pic",Contants.PIC)
-                    .addParams("live_name",name)
-                    .addParams("live_type","0")
+                    .addParams("uid", SharedPreferenceUtils.getString(CameraActivity.this, "userId"))
+                    .addParams("pic", Contants.PIC)
+                    .addParams("live_name", name)
+                    // .addParams("live_type",new Random().nextInt(2) + "")
+                    .addParams("live_type", "0")
                     .build()
                     .execute(new StringCallback() {
                         @Override
                         public void onError(Call call, Exception e, int id) {
-                            ToastUtils.show(CameraActivity.this,"创建房间网络请求失败");
+                            ToastUtils.show(CameraActivity.this, "创建房间网络请求失败");
                         }
 
                         @Override
                         public void onResponse(String response, int id) {
-                            Gson gson=new Gson();
-                            Log.e("TAG", "888888888888888888888888888888"+response);
+                            Gson gson = new Gson();
                             roomBean = gson.fromJson(response, RoomBean.class);
-                            if(0== roomBean.getError_code()) {
+                            if (0 == roomBean.getError_code()) {
                                 StringBuilder sb = new StringBuilder(Contants.PULL_STREAMER);
                                 sb.append(roomBean.getResult().getId());
                                 mStreamer.setUrl(sb.toString());
-                                ToastUtils.show(CameraActivity.this,"创建房间成功");
-                                updatestate(Long.toString(roomBean.getResult().getId()),"0");
-                            Log.e("TAG", "推流地址========="+mUrl+roomBean.getResult().getId());
+                                ToastUtils.show(CameraActivity.this, "创建房间成功");
+                                updatestate(Long.toString(roomBean.getResult().getId()), "0");
+                                Log.e("TAG", "推流地址=========" + mUrl + roomBean.getResult().getId());
                             }
                         }
                     });
@@ -904,20 +896,21 @@ public class CameraActivity extends Activity implements
      * 更改直播状态
      */
 
-    private void updatestate(String live_id,String state){
+    private void updatestate(String live_id, String state) {
         OkHttpUtils.post()
                 .url(Contants.API.UPDATE_LIVE_STATUS)
-                .addParams("live_id",live_id)
-                .addParams("status",state)
+                .addParams("live_id", live_id)
+                .addParams("status", state)
                 .build()
                 .execute(new StringCallback() {
                     @Override
                     public void onError(Call call, Exception e, int id) {
-                        ToastUtils.show(CameraActivity.this,"网络连接异常");
+                        ToastUtils.show(CameraActivity.this, "网络连接异常");
                     }
+
                     @Override
                     public void onResponse(String response, int id) {
-                        ToastUtils.show(CameraActivity.this,"网络连接异常");
+                        ToastUtils.show(CameraActivity.this, "网络正常");
                         onShootClick();
                     }
                 });
